@@ -22,7 +22,7 @@ var c *mongo.Client
 var entryService *mongo.EntryService
 
 const (
-	mongoUrl            = "mongodb://my-release-mongodb:27017"
+	mongoUrl            = "mongodb://my-release-mongodb.default.svc.cluster.local:27017"
 	dbName              = "prod_cve_db"
 	entryCollectionName = "cve_entry"
 )
