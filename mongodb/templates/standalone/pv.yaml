@@ -1,0 +1,19 @@
+{{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) (not (eq .Values.architecture "replicaset")) (not .Values.useStatefulSet) }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongo-pv-volume-data
+  labels:
+    name: mongo-pv-volume
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+    - ReadWriteOnce
+  claimRef:
+     namespace: {{ include "mongodb.namespace" . | quote }}
+     name: {{ include "mongodb.fullname" . }} 
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/opt/mongodb/data"
+{{- end }}

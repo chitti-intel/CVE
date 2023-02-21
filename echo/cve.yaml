@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cve-pod
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      cve: web
+  template:
+    metadata:
+      labels:
+        cve: web
+    spec:
+      containers:
+      - name: cve-scanner
+        image: adarshcvv/cve_scanner
+        imagePullPolicy: Never
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cve-svc
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    cve: web
+  ports:
+  - port: 1323
+    targetPort: 1323
+    nodePort: 30001

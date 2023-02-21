@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"time"
+	"fmt"
 
 	"echo/pkg"
 	"echo/pkg/cve"
@@ -67,7 +68,7 @@ func (si Server) PostApiV1CveReports(ctx echo.Context) error {
 	name := ctx.FormValue("name")
 	digest := ctx.FormValue("digest")
 
-	// fmt.Println(name)
+	fmt.Println(name)
 	// fmt.Println(inputType)
 	//------------
 	// Read files
@@ -130,7 +131,7 @@ func (si Server) PostApiV1CveReports(ctx echo.Context) error {
 		if err != nil {
 			return err
 		}
-
+	fmt.Println(cveReport)
 		report = &root.Report{
 			Matches: cveReport,
 		}
@@ -250,7 +251,9 @@ func generateCVEReport(inputType, name string) ([]root.Match, error) {
 	}
 
 	argstring := argSuffix + ` -o json | jq '.matches | [.[] | {package: .matchDetails[].searchedBy.package.name, version: .matchDetails[].searchedBy.package.version, cve: .vulnerability.id, severity: .vulnerability.severity, fixstate: .vulnerability.fix.state}]'`
+	fmt.Println(argstring)
 	outcveresult, err := exec.Command("sh", "-c", argstring).Output()
+	fmt.Println(outcveresult)
 	if err != nil {
 		return nil, err
 	}
