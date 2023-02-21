@@ -1,0 +1,50 @@
+package mongo
+
+import (
+	"echo/pkg"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+)
+
+type entryModel struct {
+	Id bson.ObjectId `bson:"_id,omitempty"`
+	// Username string
+	// Password string
+	Uuid      string
+	Name      string
+	Digest    string
+	Timestamp string
+	SbomPath  string
+	CVE       string
+}
+
+func entryModelIndex() mgo.Index {
+	return mgo.Index{
+		Key:        []string{"Name", "Digest"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+}
+
+func newEntryModel(e *root.Entry) *entryModel {
+	return &entryModel{
+		Uuid:      e.Uuid,
+		Name:      e.Name,
+		Digest:    e.Digest,
+		Timestamp: e.Timestamp,
+		SbomPath:  e.SbomPath,
+		CVE:       e.CVE}
+}
+
+func (e *entryModel) toRootEntry() *root.Entry {
+	return &root.Entry{
+		Id:        e.Id.Hex(),
+		Uuid:      e.Uuid,
+		Name:      e.Name,
+		Digest:    e.Digest,
+		Timestamp: e.Timestamp,
+		SbomPath:  e.SbomPath,
+		CVE:       e.CVE}
+}
