@@ -16,7 +16,6 @@ spec:
       containers:
       - name: cve-scanner
         image: adarshcvv/cve_scanner
-        imagePullPolicy: Never
 ---
 apiVersion: v1
 kind: Service
@@ -30,4 +29,4 @@ spec:
   ports:
   - port: 1323
     targetPort: 1323
-    nodePort: 30001
+    nodePort: 31323

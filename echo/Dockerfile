@@ -19,6 +19,10 @@ RUN go build -o cve_scanner
 
 FROM alpine:latest
 
+ENV http_proxy=http://proxy-dmz.intel.com:912
+ENV https_proxy=http://proxy-dmz.intel.com:912
+ENV no_proxy=intel.com
+
 RUN apk update
 RUN apk upgrade
 RUN apk add bash
