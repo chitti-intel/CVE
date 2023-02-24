@@ -312,7 +312,7 @@ func generateCVEReport(inputType, name string) ([]root.Match, error) {
 	}
 
 	// argstring := argSuffix + ` -o json | jq '.matches | [.[] | {package: .matchDetails[].searchedBy.package.name, version: .matchDetails[].searchedBy.package.version, cve: .vulnerability.id, severity: .vulnerability.severity, fixstate: .vulnerability.fix.state}]'`
-	argstring := argSuffix + ` -o template -t /home/otc/Adarsh/cve_test/cve-json.tmpl`
+	argstring := argSuffix + ` -o template -t ./cve-json.tmpl`
 	outcveresult, err := exec.Command("sh", "-c", argstring).Output()
 	if err != nil {
 		return nil, err

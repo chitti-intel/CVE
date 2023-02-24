@@ -31,6 +31,7 @@ RUN apk add libc6-compat
 WORKDIR /
 
 COPY --from=0 /app/cve_scanner .
+COPY --from=0 /app/cve-json.tmpl .
 
 RUN apk add wget
 RUN wget https://github.com/anchore/grype/releases/download/v0.53.1/grype_0.53.1_linux_amd64.tar.gz
