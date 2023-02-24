@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
-	"fmt"
 
 	"echo/pkg"
 	"echo/pkg/cve"
@@ -69,7 +70,7 @@ func (si Server) PostApiV1CveReports(ctx echo.Context) error {
 	digest := ctx.FormValue("digest")
 
 	fmt.Println(name)
-	// fmt.Println(inputType)
+	fmt.Println(inputType)
 	//------------
 	// Read files
 	//------------
@@ -131,7 +132,7 @@ func (si Server) PostApiV1CveReports(ctx echo.Context) error {
 		if err != nil {
 			return err
 		}
-	fmt.Println(cveReport)
+
 		report = &root.Report{
 			Matches: cveReport,
 		}
@@ -142,7 +143,7 @@ func (si Server) PostApiV1CveReports(ctx echo.Context) error {
 		err = storeInDB(uuid, name, digest, timeStamp, sbomPath, report)
 	}
 
-	// fmt.Println(report)
+	fmt.Println(report)
 	response := &PostResponse{
 		Uuids: []UuidInfo{
 			{
@@ -215,8 +216,19 @@ func (si Server) GetApiV1CveReports(ctx echo.Context, params cve.GetApiV1CveRepo
 
 	return ctx.JSON(http.StatusOK, response)
 }
-func (si Server) GetApiV1CveReportsUuid(ctx echo.Context, uuid string) error {
+func (si Server) GetApiV1CveReportsUuid(ctx echo.Context, uuid string, params cve.GetApiV1CveReportsUuidParams) error {
 
+	var flag bool
+	var version_float, cvss_float float64
+	var filtererd_report *root.Report
+	version := params.Version
+	if version != nil {
+		version_float, _ = strconv.ParseFloat(*version, 64)
+	}
+	cvss_score := params.Cvss
+	if cvss_score != nil {
+		cvss_float, _ = strconv.ParseFloat(*cvss_score, 64)
+	}
 	// get the document from db
 	document, err := entryService.GetByUuid(uuid)
 	if err != nil {
@@ -227,6 +239,55 @@ func (si Server) GetApiV1CveReportsUuid(ctx echo.Context, uuid string) error {
 	timeStamp := document.Timestamp
 	report := document.CVE
 
+	if version != nil || cvss_score != nil {
+		var filetered_matches []root.Match
+		for _, match := range report.Matches {
+			flag = false
+			var filetered_cvss []root.CvssEntry
+			for _, cvss_object := range match.Cvss {
+				unit_version, err := strconv.ParseFloat(cvss_object.Version, 64)
+				if err != nil {
+					return err
+				}
+				unit_cvss, err := strconv.ParseFloat(cvss_object.BaseScore, 64)
+				if err != nil {
+					return err
+				}
+
+				if version != nil && cvss_score != nil {
+					if unit_version == version_float && unit_cvss >= cvss_float {
+						filetered_cvss = append(filetered_cvss, cvss_object)
+						flag = true
+					}
+				} else if cvss_score != nil {
+					if unit_cvss >= cvss_float {
+						filetered_cvss = append(filetered_cvss, cvss_object)
+						flag = true
+					}
+				} else {
+					if unit_version == version_float {
+						filetered_cvss = append(filetered_cvss, cvss_object)
+						flag = true
+					}
+				}
+				if flag {
+					var elem root.Match
+					elem.CVE = match.CVE
+					elem.Package = match.Package
+					elem.Version = match.Version
+					elem.Severity = match.Severity
+					elem.Cvss = filetered_cvss
+					filetered_matches = append(filetered_matches, elem)
+				}
+			}
+		}
+		filtererd_report = &root.Report{
+			Matches: filetered_matches,
+		}
+	} else {
+		filtererd_report = report
+	}
+
 	response := &PostResponse{
 		Uuids: []UuidInfo{
 			{
@@ -236,7 +297,7 @@ func (si Server) GetApiV1CveReportsUuid(ctx echo.Context, uuid string) error {
 				TimeStamp: timeStamp,
 			},
 		},
-		Report: *report,
+		Report: *filtererd_report,
 	}
 	return ctx.JSON(http.StatusOK, response)
 }
@@ -250,10 +311,9 @@ func generateCVEReport(inputType, name string) ([]root.Match, error) {
 		argSuffix = "grype sbom:" + name
 	}
 
-	argstring := argSuffix + ` -o json | jq '.matches | [.[] | {package: .matchDetails[].searchedBy.package.name, version: .matchDetails[].searchedBy.package.version, cve: .vulnerability.id, severity: .vulnerability.severity, fixstate: .vulnerability.fix.state}]'`
-	fmt.Println(argstring)
+	// argstring := argSuffix + ` -o json | jq '.matches | [.[] | {package: .matchDetails[].searchedBy.package.name, version: .matchDetails[].searchedBy.package.version, cve: .vulnerability.id, severity: .vulnerability.severity, fixstate: .vulnerability.fix.state}]'`
+	argstring := argSuffix + ` -o template -t /home/otc/Adarsh/cve_test/cve-json.tmpl`
 	outcveresult, err := exec.Command("sh", "-c", argstring).Output()
-	fmt.Println(outcveresult)
 	if err != nil {
 		return nil, err
 	}

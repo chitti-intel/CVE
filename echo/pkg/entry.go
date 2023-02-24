@@ -4,11 +4,18 @@ type Report struct {
 	Matches []Match `json:"matches"`
 }
 type Match struct {
-	CVE      string `json:"cve"`
-	Package  string `json:"package"`
-	Version  string `json:"version"`
-	Severity string `json:"severity"`
-	Fixstate string `json:"fixtate"`
+	CVE      string      `json:"cve"`
+	Package  string      `json:"package"`
+	Version  string      `json:"version"`
+	Severity string      `json:"severity"`
+	Cvss     []CvssEntry `json:"cvss"`
+}
+
+type CvssEntry struct {
+	Version             string `json:"version"`
+	BaseScore           string `json:"baseScore"`
+	ExploitabilityScore string `json:"exploitabilityScore"`
+	ImpactScore         string `json:"impactScore"`
 }
 
 type Entry struct {
