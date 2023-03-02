@@ -32,17 +32,6 @@ const (
 type Server struct {
 }
 
-// type Report struct {
-// 	Matches []Match `json:"matches"`
-// }
-// type Match struct {
-// 	CVE      string `json:"cve"`
-// 	Package  string `json:"package"`
-// 	Version  string `json:"version"`
-// 	Severity string `json:"severity"`
-// 	Fixstate string `json:"fixtate"`
-// }
-
 type UuidInfo struct {
 	Uuid      string `json:"uuid"`
 	Name      string `json:"name"`
@@ -69,8 +58,6 @@ func (si Server) PostApiV1CveReports(ctx echo.Context) error {
 	name := ctx.FormValue("name")
 	digest := ctx.FormValue("digest")
 
-	fmt.Println(name)
-	fmt.Println(inputType)
 	//------------
 	// Read files
 	//------------
@@ -106,11 +93,9 @@ func (si Server) PostApiV1CveReports(ctx echo.Context) error {
 				}
 				defer src.Close()
 
-				// fmt.Println(file.Filename)
 				// Destination
-				sbomPath = "/home/otc/go/src/echo/" + file.Filename
+				sbomPath = "/tmp/" + file.Filename
 				dst, err := os.Create(sbomPath)
-				// fmt.Println(file.Filename)
 				if err != nil {
 					return err
 				}
@@ -311,8 +296,7 @@ func generateCVEReport(inputType, name string) ([]root.Match, error) {
 		argSuffix = "grype sbom:" + name
 	}
 
-	// argstring := argSuffix + ` -o json | jq '.matches | [.[] | {package: .matchDetails[].searchedBy.package.name, version: .matchDetails[].searchedBy.package.version, cve: .vulnerability.id, severity: .vulnerability.severity, fixstate: .vulnerability.fix.state}]'`
-	argstring := argSuffix + ` -o template -t ./cve-json.tmpl`
+	argstring := argSuffix + ` --add-cpes-if-none -o template -t ./cve-json.tmpl`
 	outcveresult, err := exec.Command("sh", "-c", argstring).Output()
 	if err != nil {
 		return nil, err

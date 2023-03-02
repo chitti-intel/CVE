@@ -37,9 +37,6 @@ RUN apk add wget
 RUN wget https://github.com/anchore/grype/releases/download/v0.53.1/grype_0.53.1_linux_amd64.tar.gz
 RUN tar zxvpf grype_0.53.1_linux_amd64.tar.gz && rm grype_0.53.1_linux_amd64.tar.gz CHANGELOG.md LICENSE README.md
 RUN cp grype /usr/local/bin
-RUN wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && \
-    mv jq-linux64 /usr/local/bin/jq && \
-    chmod +x /usr/local/bin/jq
  
 # Tells Docker which network port your container listens on
 EXPOSE 1323
